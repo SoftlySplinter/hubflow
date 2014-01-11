@@ -1,5 +1,5 @@
 require "hubflow/version"
-
-module Hubflow
-  # Your code goes here...
-end
+require 'hub'
+require "hubflow/args"
+require "hubflow/commands"
+require "hubflow/runner"
