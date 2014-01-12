@@ -3,6 +3,7 @@ module HubFlow
   module Commands
     instance_methods.each { |m| undef_method(m) unless m =~ /(^__|send|to\?$)/ }
     extend self
+
     def run(args)
       args.unshift 'help' if args.empty?
       cmd = args.shift
@@ -17,17 +18,17 @@ module HubFlow
       default = args.delete('-d')
       force = args.delete('-f')
 
-      if not Hub::Commands.send(:local_repo, false)
+      if not local_repo(false)
         puts "> hub init " << args.join(" ")
         Hub::Runner.new('init', hub_args)
       end
       
-
       if flow_initialised? and not force
         puts "Already initialized for gitflow."
         puts "To force reinitialization, use: git flow init -f"
         exit 0
       end
+
       puts "> git flow init " << (default ? '-d ' : '') << (force ? '-f ' : '')
     end
 
@@ -35,7 +36,28 @@ module HubFlow
       flow_master_init? and flow_develop_init? and (flow_master != flow_develop) and flow_prefixes_configured?
     end
 
+    def flow_master
+      git_config("gitflow.branch.master")
+    end
+
+    def flow_develop
+      git_config("gitflow.branch.develop")
+    end
+
     def flow_master_init?
+      flow_master and local_repo.file_exist?('refs', 'heads', flow_master)
+    end
+
+    def flow_develop_init?
+      flow_develop and local_repo.file_exist?('refs', 'heads', flow_develop)
+    end
+
+    def flow_prefixes_configured?
+      git_config("gitflow.prefix.feature") and
+      git_config("gitflow.prefix.release") and 
+      git_config("gitflow.prefix.hotfix") and 
+      git_config("gitflow.prefix.support") and 
+      git_config("gitflow.prefix.versiontag")
     end
 
     def help(args)
@@ -52,6 +74,14 @@ Basic Commands:
             reinitialise an existing one.
       help
     
+    end
+
+    def local_repo(fatal = true)
+      Hub::Commands.send(:local_repo, fatal)
+    end
+
+    def git_config(args)
+      Hub::Commands.send(:git_config, args)
     end
   end
 end
