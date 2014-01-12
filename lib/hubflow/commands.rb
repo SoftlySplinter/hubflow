@@ -19,23 +19,93 @@ module HubFlow
       default = args.delete('-d')
       force = args.delete('-f')
 
+      puts "> git flow init " << (default ? '-d ' : '') << (force ? '-f ' : '')
+
       if not local_repo(false)
         puts "> hub init " << args.join(" ")
         Hub::Runner.new('init', hub_args)
       else
         if (not repo_is_headless?) or require_clean_working_tree?
           puts "Repository is not headless"
-          exit 0
+#          exit
         end
       end
       
       if flow_initialised? and not force
         puts "Already initialized for gitflow."
         puts "To force reinitialization, use: git flow init -f"
-        exit
+#        exit
       end
 
-      puts "> git flow init " << (default ? '-d ' : '') << (force ? '-f ' : '')
+      puts "Using default branch names" if default
+
+      master_branch
+
+      master_branch = flow_master if flow_master_init? and not force
+      
+      default_suggestion = "master"
+      should_check_existence = false
+      
+      if not branches?
+        puts "No branches exist yes. Base branches must be created now."
+        should_check_existence = false
+        default_suggestion = flow_master || default_suggestion
+      else
+        puts "Which branch should be used for bringing forth production releases?"
+        branches.each do |branch|
+          puts "   - #{branch}"
+        end
+        should_check_existence = true
+        default_suggestion = get_suggestion(flow_master, 'production', 'main', 'master')
+        
+        print "Branch name for production releases: [#{default_suggestion}] "
+
+        if default
+          print "\n"
+        else
+          master_branch = STDIN.gets.chomp
+        end
+
+        master_branch = default_suggestion if (not master_branch) or master_branch.empty?
+
+        if should_check_existence
+          if not branches.include?(master_branch) and remote_branches.include?(master_branch)
+            Hub::Runner.new("branch", master_branch, "origin/#{master_branch}")
+          elsif not branches.include?(master_branch)
+            puts "Local branch '#{master_branch}' does not exist."
+            exit
+          end
+        end
+      end
+        
+    end
+
+    def get_suggestion(*suggested_branches)
+      suggested_branches.each do |branch|
+        return branch if branches.include?(branch)
+      end
+    end
+
+    def branches?
+      not branches.empty?
+    end
+
+    def branches
+      local_branches = []
+      Dir.foreach(File.join(git_dir, "refs", "heads")) do |branch|
+        next if branch.start_with?('.')
+        local_branches << branch
+      end
+      return local_branches
+    end
+
+    def remote_branches
+      remote_brchs = []
+      Dir.foreach(File.join(git_dir, "refs", "remotes")) do |branch|
+        next if branch.start_with?('.')
+        remote_brchs << branch
+      end
+      return remote_brchs
     end
 
     def repo_is_headless?
@@ -57,7 +127,7 @@ module HubFlow
         if res > 0
           puts 'fatal: Working tree contains unstaged changes. Aborting.' if res == 1
           puts 'fatal: Index contains uncommited changes. Aborting.' if res == 2
-          exit
+          #exit
         end
         res == 0
     end
