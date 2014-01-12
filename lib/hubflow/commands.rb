@@ -56,7 +56,7 @@ module HubFlow
           puts "   - #{branch}"
         end
         should_check_existence = true
-        default_suggestion = get_suggestion(flow_master, 'production', 'main', 'master')
+        default_suggestion = get_suggestion(flow_master, 'production', 'main', 'master') || 'master'
         
         print "Branch name for production releases: [#{default_suggestion}] "
 
@@ -70,7 +70,8 @@ module HubFlow
 
         if should_check_existence
           if not branches.include?(master_branch) and remote_branches.include?(master_branch)
-            Hub::Runner.new("branch", master_branch, "origin/#{master_branch}")
+            puts "> hub branch #{master_branch} origin/#{master_branch}"
+            Hub::Runner.execute("branch", master_branch, "origin/#{master_branch}")
           elsif not branches.include?(master_branch)
             puts "Local branch '#{master_branch}' does not exist."
             exit
@@ -81,9 +82,7 @@ module HubFlow
     end
 
     def get_suggestion(*suggested_branches)
-      suggested_branches.each do |branch|
-        return branch if branches.include?(branch)
-      end
+      (branches & suggested_branches).first
     end
 
     def branches?
@@ -101,7 +100,7 @@ module HubFlow
 
     def remote_branches
       remote_brchs = []
-      Dir.foreach(File.join(git_dir, "refs", "remotes")) do |branch|
+      Dir.foreach(File.join(git_dir, "refs", "remotes", "origin")) do |branch|
         next if branch.start_with?('.')
         remote_brchs << branch
       end
