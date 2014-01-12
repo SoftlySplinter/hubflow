@@ -1,4 +1,4 @@
 # Hubflow
 
-[https://github.com/github/hub](hub) integration for [https://github.com/nvie/gitflow](gitflow).
+[hub](https://github.com/github/hub) integration for [gitflow](https://github.com/nvie/gitflow).
 
