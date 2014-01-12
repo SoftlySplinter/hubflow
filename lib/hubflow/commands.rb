@@ -56,8 +56,10 @@ module HubFlow
       git_config("gitflow.prefix.feature") and
       git_config("gitflow.prefix.release") and 
       git_config("gitflow.prefix.hotfix") and 
-      git_config("gitflow.prefix.support") and 
-      git_config("gitflow.prefix.versiontag")
+      git_config("gitflow.prefix.support") 
+      # Because of the way hub handles git config commands it will return nil 
+      # if the result is empty or fails.
+      # git_config("gitflow.prefix.versiontag")
     end
 
     def help(args)
@@ -82,6 +84,7 @@ Basic Commands:
 
     def git_config(args)
       Hub::Commands.send(:git_config, args)
+      
     end
   end
 end
