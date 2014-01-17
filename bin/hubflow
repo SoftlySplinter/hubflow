@@ -1,8 +1,11 @@
+#! /usr/bin/env ruby
+
+# hubflow(1)
+
 # Load the bundled environment
 require "rubygems"
 require "bundler/setup"
 
-# Require gems specified in the Gemfile
-require "hubflow"
+require 'hubflow'
 
 HubFlow::Runner.new(*ARGV)

@@ -18,6 +18,7 @@ module HubFlow
       puts "$ flow init " << args.join(" ")
       default = args.delete('-d')
       force = args.delete('-f')
+      create = args.delete('-c')
 
       puts "> git flow init " << (default ? '-d ' : '') << (force ? '-f ' : '')
 
@@ -26,15 +27,16 @@ module HubFlow
         Hub::Runner.new('init', hub_args)
       else
         if (not repo_is_headless?) or require_clean_working_tree?
-          puts "Repository is not headless"
-#          exit
+          exit
         end
       end
+
+      Hub::Runner.new('create') if not remote_repo_exists? and create
       
       if flow_initialised? and not force
         puts "Already initialized for gitflow."
         puts "To force reinitialization, use: git flow init -f"
-#        exit
+        exit
       end
 
       puts "Using default branch names" if default
@@ -78,7 +80,11 @@ module HubFlow
           end
         end
       end
-        
+
+      puts "> git config --add gitflow.branches.master #{master_branch}"
+      git_command("config --add gitflow.branches.master #{master_branch}")
+      
+       
     end
 
     def get_suggestion(*suggested_branches)
@@ -170,9 +176,15 @@ module HubFlow
       <<-help
 useage: hubflow <command>
 
-Basic Commands:
-    init    Create an empty git repository with gitflow information or 
-            reinitialise an existing one.
+Available subcommands are:
+    init      Initialize a new git repo with support for the branching model.
+    feature   Manage your feature branches.
+    release   Manage your release branches.
+    hotfix    Manage your hotfix branches.
+    support   Manage your support branches.
+    version   Shows version information.
+
+Try 'git flow <subcommand> help' for details.
       help
     end
 
